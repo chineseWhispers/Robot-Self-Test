@@ -1,0 +1,759 @@
+-- Altera Memory Initialization File (MIF)
+
+DEPTH = 1024;
+WIDTH = 16;
+
+ADDRESS_RADIX = HEX;
+DATA_RADIX = HEX;
+
+CONTENT
+  BEGIN
+    [000..3FF] : 0000;  -- Default to NOP
+
+           000 : 0698;  -- 	LOAD    Zero
+           001 : 4CB2;  -- 	OUT     SONAREN     ; Disable sonar
+           002 : 4C83;  -- 	OUT     LVELCMD     ; Stop motors
+           003 : 4C8B;  -- 	OUT     RVELCMD
+           004 : 0699;  -- 	LOAD	One			; "DE2 I|O Push KEY1"
+           005 : 4C06;  -- 	OUT		LCD
+           006 : 4248;  -- 	CALL	BatteryVoltageSetup ;Initialize battery stuff
+           007 : 0697;  -- 	LOAD	FFFF		; Load full "FFFF" in hex
+           008 : 4C01;  -- 	OUT		LEDS		; Turn on all red LEDs
+           009 : 4C11;  -- 	OUT		LEDG		; Turn on all green LEDs
+           00A : 4C04;  -- 	OUT		SEVENSEG	; Print on first four of SEVENSEG
+           00B : 4C14;  -- 	OUT		SEVENSEG2	; Print on second four of SEVENSEG
+           00C : 4803;  -- 	IN		XIO
+           00D : 26DC;  -- 	AND		KeyMask2
+           00E : 2067;  -- 	JZERO	MenuTop		; KEY2 sends you directly to the robot tests
+           00F : 4803;  -- 	IN		XIO			; Now, wait for KEY1 to be pressed
+           010 : 26DB;  -- 	AND		Keymask		; Keymask for key1
+           011 : 1C07;  -- 	JPOS	OutVer
+           012 : 1807;  -- 	JNEG	OutVer
+           013 : 4239;  -- 	CALL	Key1sub		; Subroutine that waits for KEY1 to be released before going to next things
+           014 : 0698;  -- 	LOAD	Zero		; Clear all the outputs
+           015 : 4C01;  -- 	OUT		LEDS		; 
+           016 : 4C11;  -- 	OUT		LEDG		; 
+           017 : 4C04;  -- 	OUT		SEVENSEG	; 
+           018 : 4C14;  -- 	OUT		SEVENSEG2	; 
+           019 : 069A;  -- 	LOAD		Two		; "DE2 I|O Switch Input Test"
+           01A : 4C06;  -- 	OUT			LCD	
+           01B : 4800;  -- 	IN			SWITCHES	;Check the switches
+           01C : 4C01;  -- 	OUT 		LEDS		;Output so red LEDs correspond to switches
+           01D : 0E99;  -- 	ADD			One			;Add one- when all the switches are already on, this will flip from all 1's to all 0's
+           01E : 1C1B;  -- 	JPOS		InVer		;Proceed if all switches up (and equal to 0), repeat if not
+           01F : 181B;  -- 	JNEG		InVer
+           020 : 0698;  -- 	LOAD		Zero
+           021 : 4C01;  -- 	OUT			LEDS
+           022 : 0698;  -- 	LOAD		Zero		;"DE2 I|O PK Input Test"
+           023 : 4C06;  -- 	OUT			LCD	
+           024 : 06DD;  -- 	LOAD		Keytest		;Loads a vector of all 0's except three keys to test
+           025 : 0A86;  -- 	STORE		Temp		;Store in temp
+           026 : 4803;  -- 	IN			XIO			;Take current input, AND with temp.
+           027 : 2686;  -- 	AND			Temp		;AND'ing results in keys pressed changing their place in temp. to 0
+           028 : 0A86;  -- 	STORE		Temp
+           029 : 3005;  -- 	SHIFT		5
+           02A : 4C11;  -- 	OUT			LEDG
+           02B : 1C26;  -- 	JPOS		InVer22		;When it's all zero, proceed to timer test
+           02C : 1826;  -- 	JNEG		InVer22	
+           02D : 069B;  -- 	LOAD		Three		;"DE2 I|O Timer Test"
+           02E : 4C06;  -- 	OUT			LCD
+           02F : 4239;  -- 	CALL		Key1sub
+           030 : 0698;  -- 	LOAD		Zero		;Clear all the switch LEDs
+           031 : 4C01;  -- 	OUT			LEDS
+           032 : 4803;  -- 	IN		XIO				; Now, wait for KEY1 to be pressed
+           033 : 26DB;  -- 	AND		Keymask			; Keymask for key1
+           034 : 1C30;  -- 	JPOS	TimerVer00
+           035 : 1830;  -- 	JNEG	TimerVer00
+           036 : 4239;  -- 	CALL	Key1sub			; If key1 pressed, go to next things
+           037 : 06CE;  -- 	LOAD	LEDwipe
+           038 : 0A88;  -- 	STORE	wipetemp
+           039 : 0688;  -- 	LOAD		wipetemp	;Load vector with only LSB 1
+           03A : 4C01;  -- 	OUT			LEDS		;Put out to LEDS
+           03B : 4243;  -- 	CALL		Wait1		;Use wait routine, starts at waiting 1 second
+           03C : 0688;  -- 	LOAD		wipetemp	;Shift active LED to the left
+           03D : 3001;  -- 	SHIFT		1
+           03E : 0A88;  -- 	STORE		wipetemp
+           03F : 3600;  -- 	ADDI	-512
+           040 : 2046;  -- 	JZERO	TimerVer2	
+           041 : 4803;  -- 	IN		XIO				; Now, wait for KEY1 to be pressed
+           042 : 26DB;  -- 	AND		Keymask			; Keymask for key1
+           043 : 1C39;  -- 	JPOS	TimerVer
+           044 : 1839;  -- 	JNEG	TimerVer
+           045 : 4239;  -- 	CALL	Key1sub			; Wait until KEY1 is released, go to next things
+           046 : 06DE;  -- 	LOAD		Tspeed
+           047 : 3405;  -- 	ADDI		5			;makes the timer speed up
+           048 : 204D;  -- 	JZERO		BeepVer		;When the timing parameter has been reduced twice down to 0, go to beep test
+           049 : 0ADE;  -- 	STORE		Tspeed
+           04A : 0699;  -- 	LOAD		One			;reset position of moving LED back to beginning
+           04B : 0A88;  -- 	STORE		wipetemp
+           04C : 1439;  -- 	JUMP		TimerVer
+           04D : 069C;  -- 	Load		Four		;"BOTBASIC BEEP"
+           04E : 4C06;  -- 	Out			LCD
+           04F : 0698;  -- 	Load		Zero		;Clear all the displays
+           050 : 4C04;  -- 	OUT			SEVENSEG
+           051 : 4C14;  -- 	OUT			SEVENSEG2
+           052 : 4C01;  -- 	OUT			LEDS
+           053 : 4C11;  -- 	OUT			LEDG
+           054 : 4803;  -- 	IN		XIO				; Now, wait for KEY1 to be pressed
+           055 : 26DB;  -- 	AND		Keymask			; Keymask for key1
+           056 : 1C54;  -- 	JPOS	BeepVer2
+           057 : 1854;  -- 	JNEG	BeepVer2
+           058 : 4239;  -- 	CALL	Key1sub			; Wait until KEY1 is released, go to next things
+           059 : 4C16;  -- 	OUT		BEEP
+           05A : 4803;  -- 	IN		XIO				; Now, wait for KEY1 to be pressed
+           05B : 26DB;  -- 	AND		Keymask			; Keymask for key1
+           05C : 1C59;  -- 	JPOS	Beeploop
+           05D : 1859;  -- 	JNEG	Beeploop
+           05E : 4239;  -- 	CALL	Key1sub			; Wait until KEY1 is released, go to next things
+           05F : 069D;  -- 	Load	Five			;"BOTBASIC BATT"
+           060 : 4C06;  -- 	OUT		LCD
+           061 : 4258;  -- 	CALL	ReadBatteryVoltage		;Print battery voltage to LCD in real time
+           062 : 4803;  -- 	IN		XIO				; Now, wait for KEY1 to be pressed
+           063 : 26DB;  -- 	AND		Keymask			; Keymask for key1
+           064 : 1C61;  -- 	JPOS	BattVer
+           065 : 1861;  -- 	JNEG	BattVer
+           066 : 4239;  -- 	CALL	Key1sub			; Wait until KEY1 is released, go to next things
+           067 : 0698;  -- 	LOAD	Zero		; Clear all the outputs
+           068 : 4C11;  -- 	OUT		LEDG		; 
+           069 : 4C04;  -- 	OUT		SEVENSEG	; 
+           06A : 4C14;  -- 	OUT		SEVENSEG2	; 
+           06B : 4800;  -- 	IN		SWITCHES	;Different menu options
+           06C : 4C01;  -- 	OUT		LEDS
+           06D : 37FF;  -- 	ADDI	-1
+           06E : 207A;  -- 	JZERO	MenuBot
+           06F : 37FF;  -- 	ADDI	-1
+           070 : 2083;  -- 	JZERO	MenuSonar
+           071 : 37FE;  -- 	ADDI	-2
+           072 : 208C;  -- 	JZERO	MenuMotor
+           073 : 37FC;  -- 	ADDI	-4
+           074 : 2095;  -- 	JZERO	MenuVel
+           075 : 1476;  -- 	Jump	MenuErr
+           076 : 06A5;  -- 	LOAD	Thirteen	;"MENU ?????"
+           077 : 4C06;  -- 	OUT		LCD
+           078 : 423E;  -- 	CALL	Wait2
+           079 : 1467;  -- 	JUMP	MenuTop
+           07A : 069E;  -- 	LOAD	Six				;"MENU BOTBASIC"
+           07B : 4C06;  -- 	OUT		LCD
+           07C : 423E;  -- 	CALL	Wait2
+           07D : 4803;  -- 	IN		XIO				; Now, wait for KEY1 to be pressed
+           07E : 26DB;  -- 	AND		Keymask			; Keymask for key1
+           07F : 1C67;  -- 	JPOS	MenuTop
+           080 : 1867;  -- 	JNEG	MenuTop
+           081 : 4239;  -- 	CALL	Key1sub			; Wait until KEY1 is released, go to next things
+           082 : 144D;  -- 	JUMP	BeepVer
+           083 : 069F;  -- 	LOAD	Seven			;"MENU SONAR"
+           084 : 4C06;  -- 	OUT		LCD
+           085 : 423E;  -- 	CALL	Wait2
+           086 : 4803;  -- 	IN		XIO				; Now, wait for KEY1 to be pressed
+           087 : 26DB;  -- 	AND		Keymask			; Keymask for key1
+           088 : 1C67;  -- 	JPOS	MenuTop
+           089 : 1867;  -- 	JNEG	MenuTop
+           08A : 4239;  -- 	CALL	Key1sub			; Wait until KEY1 is released, go to next things
+           08B : 14EE;  -- 	JUMP	SonarTest1
+           08C : 06A0;  -- 	LOAD	Eight			;"MENU MOTOR"
+           08D : 4C06;  -- 	OUT		LCD
+           08E : 423E;  -- 	CALL	Wait2
+           08F : 4803;  -- 	IN		XIO				; Now, wait for KEY1 to be pressed
+           090 : 26DB;  -- 	AND		Keymask			; Keymask for key1
+           091 : 1C67;  -- 	JPOS	MenuTop
+           092 : 1867;  -- 	JNEG	MenuTop
+           093 : 4239;  -- 	CALL	Key1sub			; Wait until KEY1 is released, go to next things
+           094 : 14B4;  -- 	JUMP	MotorTest1
+           095 : 06A1;  -- 	LOAD	Nine			;"MENU VELOCITY"
+           096 : 4C06;  -- 	OUT		LCD
+           097 : 423E;  -- 	CALL	Wait2
+           098 : 4803;  -- 	IN		XIO				; Now, wait for KEY1 to be pressed
+           099 : 26DB;  -- 	AND		Keymask			; Keymask for key1
+           09A : 1C67;  -- 	JPOS	MenuTop
+           09B : 1867;  -- 	JNEG	MenuTop
+           09C : 4239;  -- 	CALL	Key1sub			; Wait until KEY1 is released, go to next things
+           09D : 149E;  -- 	JUMP	VelTest1
+           09E : 06A4;  -- 	LOAD	Twelve			;"TEST VELOCITY"
+           09F : 4C06;  -- 	OUT		LCD
+           0A0 : 06A4;  -- 	LOAD	Twelve			;"TEST VELOCITY"
+           0A1 : 4C06;  -- 	OUT		LCD
+           0A2 : 06A4;  -- 	LOAD	Twelve			;"TEST VELOCITY"
+           0A3 : 4C06;  -- 	OUT		LCD
+           0A4 : 4882;  -- 	IN      LVEL        ; Read velocity of left wheel
+           0A5 : 0A94;  -- 	STORE	sevin
+           0A6 : 420C;  -- 	CALL	sevcon
+           0A7 : 0695;  -- 	LOAD	sevout
+           0A8 : 4C04;  -- 	OUT     SEVENSEG    ; Output sum of wheel velocities to 7-seg
+           0A9 : 488A;  -- 	IN      RVEL	
+           0AA : 0A94;  -- 	STORE	sevin
+           0AB : 420C;  -- 	CALL	sevcon
+           0AC : 0695;  -- 	LOAD	sevout
+           0AD : 4C14;  -- 	OUT     SEVENSEG2    ; Output sum of wheel velocities to 7-seg
+           0AE : 4803;  -- 	IN		XIO				; Now, wait for KEY1 to be pressed
+           0AF : 26DB;  -- 	AND		Keymask			; Keymask for key1
+           0B0 : 1CA4;  -- 	JPOS	VelTest
+           0B1 : 18A4;  -- 	JNEG	VelTest
+           0B2 : 4239;  -- 	CALL	Key1sub			; Wait until KEY1 is released, go to next things
+           0B3 : 1467;  -- 	JUMP	MenuTop
+           0B4 : 06A2;  -- 	LOAD	Ten			;"TEST MOTOR"
+           0B5 : 4C06;  -- 	OUT		LCD
+           0B6 : 4800;  -- 	IN			SWITCHES
+           0B7 : 4C01;  -- 	OUT			LEDS
+           0B8 : 0AE9;  -- 	STORE		Motor
+           0B9 : 26E3;  -- 	AND         Selectmask      ;select wheel
+           0BA : 0AE4;  -- 	Store       Select
+           0BB : 06E9;  -- 	LOAD        Motor
+           0BC : 0AE9;  -- 	STORE       Motor
+           0BD : 26E6;  -- 	AND         Dirmask         ;get direction
+           0BE : 0AE7;  -- 	Store       Dir
+           0BF : 20C1;  -- 	JZERO       MotorOut        ;if sw2 is off
+           0C0 : 14C9;  -- 	JUMP        MotorRev        ;if se2 is on, reverse direction
+           0C1 : 06E9;  -- 	LOAD		Motor
+           0C2 : 26E8;  -- 	AND			Motormask       ;get the speed
+           0C3 : 0EDF;  -- 	ADD         tt
+           0C4 : 0AE5;  -- 	STORE       MotorSpeed
+           0C5 : 06E4;  -- 	LOAD        Select
+           0C6 : 0AE4;  -- 	STORE       Select
+           0C7 : 20D3;  -- 	JZERO       Left            ;if sw1 is off, test left wheel
+           0C8 : 14E0;  -- 	JUMP        Right           ;if sw1 is on, test right wheel
+           0C9 : 06E9;  --     LOAD		Motor		
+           0CA : 26E8;  --     AND			Motormask       ;get the speed
+           0CB : 2EE2;  --     XOR         Switchmask     
+           0CC : 0E99;  --     ADD         One             ;two's complement reverse direction
+           0CD : 12DF;  --     SUB         tt
+           0CE : 0AE5;  --     STORE       MotorSpeed
+           0CF : 06E4;  --    	LOAD        Select
+           0D0 : 0AE4;  --    	STORE       Select
+           0D1 : 20D3;  -- 	JZERO       Left
+           0D2 : 14E0;  -- 	JUMP        Right
+           0D3 : 06E5;  --     LOAD        MotorSpeed
+           0D4 : 0AE5;  --     STORE       MotorSpeed
+           0D5 : 4C83;  -- 	OUT			LVELCMD
+           0D6 : 0698;  -- 	LOAD        ZERO
+           0D7 : 4C8B;  -- 	OUT         RVELCMD
+           0D8 : 4882;  -- 	IN          LVEL            ;read velocity
+           0D9 : 4C04;  -- 	OUT         SEVENSEG        ;output to seven-seg
+           0DA : 4803;  -- 	IN			XIO				; Now, wait for KEY1 to be pressed
+           0DB : 26DB;  -- 	AND			Keymask			; Keymask for key1
+           0DC : 18B6;  -- 	JNEG		MotorTest
+           0DD : 1CB6;  -- 	JPOS		MotorTest
+           0DE : 4239;  -- 	CALL		Key1sub			; Wait until KEY1 is released, go to next things  
+           0DF : 1467;  -- 	JUMP        MenuTop
+           0E0 : 06E5;  --     LOAD        MotorSpeed
+           0E1 : 0AE5;  --     STORE       MotorSpeed
+           0E2 : 0E9A;  --     ADD         Two    
+           0E3 : 4C8B;  --     OUT         RVELCMD
+           0E4 : 0698;  --     LOAD        ZERO
+           0E5 : 4C83;  -- 	OUT         LVELCMD
+           0E6 : 488A;  -- 	IN          RVEL
+           0E7 : 4C04;  -- 	OUT         SEVENSEG
+           0E8 : 4803;  -- 	IN			XIO				; Now, wait for KEY1 to be pressed
+           0E9 : 26DB;  -- 	AND			Keymask			; Keymask for key1
+           0EA : 18B6;  -- 	JNEG		MotorTest
+           0EB : 1CB6;  -- 	JPOS		MotorTest
+           0EC : 4239;  -- 	CALL		Key1sub			; Wait until KEY1 is released, go to next things  
+           0ED : 1467;  -- 	JUMP        MenuTop
+           0EE : 06A3;  -- 	LOAD	Eleven				;"TEST SONAR"
+           0EF : 4C06;  -- 	OUT		LCD	
+           0F0 : 4800;  -- 	IN      SWITCHES
+           0F1 : 4C11;  -- 	OUT		LEDG
+           0F2 : 4803;  -- 	IN			XIO				; Now, wait for KEY1 to be pressed
+           0F3 : 26DB;  -- 	AND			Keymask			; Keymask for key1
+           0F4 : 18F8;  -- 	JNEG		Sonar0
+           0F5 : 1CF8;  -- 	JPOS		Sonar0
+           0F6 : 4239;  -- 	CALL		Key1sub			; Wait until KEY1 is released, go to next things  
+           0F7 : 1467;  -- 	JUMP        MenuTop
+           0F8 : 4800;  -- 	IN      SWITCHES
+           0F9 : 12CF;  -- 	SUB     EnSonar0
+           0FA : 2118;  -- 	JZERO   OutSonar0
+           0FB : 14FC;  -- 	JUMP    Sonar1
+           0FC : 4800;  -- 	IN      SWITCHES
+           0FD : 12D0;  --     SUB     EnSonar1
+           0FE : 2124;  --     JZERO   OutSonar1
+           0FF : 1500;  --     JUMP    Sonar2	
+           100 : 4800;  -- 	IN      SWITCHES
+           101 : 12D1;  -- 	SUB     EnSonar2
+           102 : 2130;  -- 	JZERO   OutSonar2
+           103 : 1504;  -- 	JUMP    Sonar3
+           104 : 4800;  -- 	IN     SWITCHES
+           105 : 12D2;  --     SUB     EnSonar3
+           106 : 213C;  --     JZERO   OutSonar3
+           107 : 1508;  --     JUMP    Sonar4	
+           108 : 4800;  -- 	IN     SWITCHES
+           109 : 12D3;  -- 	SUB     EnSonar4
+           10A : 2148;  -- 	JZERO   OutSonar4
+           10B : 150C;  -- 	JUMP    Sonar5
+           10C : 4800;  -- 	IN      SWITCHES
+           10D : 12D4;  --     SUB     EnSonar5
+           10E : 2154;  --     JZERO   OutSonar5
+           10F : 1510;  --     JUMP    Sonar6	
+           110 : 4800;  -- 	IN      SWITCHES
+           111 : 12D5;  -- 	SUB     EnSonar6
+           112 : 2160;  -- 	JZERO   OutSonar6
+           113 : 1514;  -- 	JUMP    Sonar7
+           114 : 4800;  -- 	IN     SWITCHES
+           115 : 12D6;  --     SUB    EnSonar7
+           116 : 216C;  --     JZERO  OutSonar7
+           117 : 14F0;  --     Jump   SonarTest   
+           118 : 0699;  -- 	LOAD    One	
+           119 : 4CB2;  -- 	OUT     SONAREN     
+           11A : 48A8;  -- 	IN      DIST0
+           11B : 0A94;  -- 	STORE	sevin
+           11C : 420C;  -- 	CALL	sevcon
+           11D : 0695;  -- 	LOAD	sevout
+           11E : 4C14;  -- 	OUT     SEVENSEG2 
+           11F : 0AD9;  -- 	STORE   LEDDIST 
+           120 : 06D8;  -- 	LOAD    SON
+           121 : 0ECF;  -- 	ADD		EnSonar0    
+           122 : 0AD8;  -- 	STORE   SON  
+           123 : 1578;  --     JUMP    leddisp
+           124 : 069A;  -- 	LOAD   Two
+           125 : 4CB2;  --     OUT    SONAREN
+           126 : 48A9;  --     IN     DIST1
+           127 : 0A94;  --     STORE	sevin
+           128 : 420C;  -- 	CALL	sevcon
+           129 : 0695;  -- 	LOAD	sevout
+           12A : 4C14;  -- 	OUT     SEVENSEG2 
+           12B : 0AD9;  --     STORE  LEDDIST 
+           12C : 06D8;  --     LOAD   SON
+           12D : 0ED0;  -- 	ADD	   EnSonar1    
+           12E : 0AD8;  -- 	STORE  SON  
+           12F : 1578;  --     JUMP   leddisp
+           130 : 069C;  -- 	LOAD	Four
+           131 : 4CB2;  -- 	OUT     SONAREN     
+           132 : 48AA;  -- 	IN      DIST2
+           133 : 0A94;  -- 	STORE	sevin
+           134 : 420C;  -- 	CALL	sevcon
+           135 : 0695;  -- 	LOAD	sevout
+           136 : 4C14;  -- 	OUT     SEVENSEG2 
+           137 : 0AD9;  -- 	STORE   LEDDIST 
+           138 : 06D8;  -- 	LOAD    SON
+           139 : 0ED1;  -- 	ADD		EnSonar2    
+           13A : 0AD8;  -- 	STORE   SON       
+           13B : 1578;  --     JUMP    leddisp
+           13C : 06A0;  -- 	LOAD   Eight
+           13D : 4CB2;  --     OUT    SONAREN
+           13E : 48AB;  --     IN     DIST3
+           13F : 0A94;  --     STORE	sevin
+           140 : 420C;  -- 	CALL	sevcon
+           141 : 0695;  -- 	LOAD	sevout
+           142 : 4C14;  -- 	OUT     SEVENSEG2 
+           143 : 0AD9;  --     STORE  LEDDIST 
+           144 : 06D8;  --     LOAD   SON
+           145 : 0ED2;  -- 	ADD	   EnSonar3    
+           146 : 0AD8;  -- 	STORE  SON  
+           147 : 1578;  --     JUMP   leddisp
+           148 : 06A7;  -- 	LOAD 	Sixteen
+           149 : 4CB2;  -- 	OUT     SONAREN     
+           14A : 48AC;  -- 	IN      DIST4
+           14B : 0A94;  -- 	STORE	sevin
+           14C : 420C;  -- 	CALL	sevcon
+           14D : 0695;  -- 	LOAD	sevout
+           14E : 4C14;  -- 	OUT     SEVENSEG2 
+           14F : 0AD9;  -- 	STORE  LEDDIST 
+           150 : 06D8;  -- 	LOAD    SON
+           151 : 0ED3;  -- 	ADD		EnSonar4    
+           152 : 0AD8;  -- 	STORE   SON        
+           153 : 1578;  --     JUMP    leddisp
+           154 : 06A9;  -- 	LOAD   ThirtyTwo
+           155 : 4CB2;  --     OUT    SONAREN
+           156 : 48AD;  --     IN     DIST5
+           157 : 0A94;  --     STORE	sevin
+           158 : 420C;  -- 	CALL	sevcon
+           159 : 0695;  -- 	LOAD	sevout
+           15A : 4C14;  -- 	OUT     SEVENSEG2 
+           15B : 0AD9;  --     STORE  LEDDIST 
+           15C : 06D8;  --     LOAD    SON
+           15D : 0ED4;  -- 	ADD		EnSonar5    
+           15E : 0AD8;  -- 	STORE   SON  
+           15F : 1578;  --     JUMP   leddisp
+           160 : 06AC;  -- 	LOAD    SixtyFour
+           161 : 4CB2;  -- 	OUT     SONAREN     
+           162 : 48AE;  -- 	IN      DIST6 
+           163 : 0A94;  -- 	STORE	sevin
+           164 : 420C;  -- 	CALL	sevcon
+           165 : 0695;  -- 	LOAD	sevout
+           166 : 4C14;  -- 	OUT     SEVENSEG2 
+           167 : 0AD9;  -- 	STORE  LEDDIST 
+           168 : 06D8;  -- 	LOAD    SON
+           169 : 0ED5;  -- 	ADD		EnSonar6    
+           16A : 0AD8;  -- 	STORE   SON       
+           16B : 1578;  --     JUMP    leddisp
+           16C : 06C1;  -- 	LOAD   OneTwentyEight
+           16D : 4CB2;  --     OUT    SONAREN
+           16E : 48AF;  --     IN     DIST7
+           16F : 0A94;  -- 	STORE	sevin
+           170 : 420C;  -- 	CALL	sevcon
+           171 : 0695;  -- 	LOAD	sevout
+           172 : 4C14;  -- 	OUT     SEVENSEG2     
+           173 : 0AD9;  --     STORE  LEDDIST 
+           174 : 06D8;  --     LOAD    SON
+           175 : 0ED6;  -- 	ADD		EnSonar7    
+           176 : 0AD8;  -- 	STORE   SON  
+           177 : 1578;  --     JUMP   leddisp
+           178 : 06D9;  -- 	LOAD	LEDDIST
+           179 : 12AE;  -- 	SUB		OneFifty
+           17A : 19CD;  -- 	JNEG	led0
+           17B : 21CD;  -- 	JZERO   led0
+           17C : 12AF;  -- 	SUB		TwoHundred
+           17D : 19D0;  -- 	JNEG	led0-1
+           17E : 21D0;  -- 	JZERO   led0-1	
+           17F : 12B0;  -- 	SUB		TwoFifty
+           180 : 19D3;  -- 	JNEG	led0-2
+           181 : 21D3;  -- 	JZERO   led0-2
+           182 : 12B1;  -- 	SUB		ThreeHundred
+           183 : 19D6;  -- 	JNEG	led0-3
+           184 : 21D6;  -- 	JZERO   led0-3
+           185 : 12B2;  -- 	SUB		ThreeFifty
+           186 : 19D9;  -- 	JNEG	led0-4
+           187 : 21D9;  -- 	JZERO   led0-4
+           188 : 12B3;  -- 	SUB		FourHundred
+           189 : 19DC;  -- 	JNEG	led0-5
+           18A : 21DC;  -- 	JZERO   led0-5
+           18B : 12B4;  -- 	SUB		FourFifty
+           18C : 19DF;  -- 	JNEG	led0-6
+           18D : 21DF;  -- 	JZERO   led0-6
+           18E : 12B5;  -- 	SUB		FiveHundred
+           18F : 19E2;  -- 	JNEG	led0-7
+           190 : 21E2;  -- 	JZERO   led0-7
+           191 : 12B6;  -- 	SUB		FiveFifty
+           192 : 19E5;  -- 	JNEG	led0-8
+           193 : 21E5;  -- 	JZERO   led0-8
+           194 : 12B7;  -- 	SUB		SixHundred
+           195 : 19E8;  -- 	JNEG	led0-9
+           196 : 21E8;  -- 	JZERO   led0-9
+           197 : 12B8;  -- 	SUB		SixFifty
+           198 : 19EB;  -- 	JNEG	led0-10
+           199 : 21EB;  -- 	JZERO   led0-10
+           19A : 12B9;  -- 	SUB		SevenHundred
+           19B : 19EE;  -- 	JNEG	led0-11
+           19C : 21EE;  -- 	JZERO   led0-11
+           19D : 12BA;  -- 	SUB		SevenFifty
+           19E : 19EE;  -- 	JNEG	led0-11
+           19F : 21EE;  -- 	JZERO   led0-11
+           1A0 : 12BB;  -- 	SUB		EightHundred
+           1A1 : 19F1;  -- 	JNEG	led0-12
+           1A2 : 21F1;  -- 	JZERO   led0-12
+           1A3 : 12BC;  -- 	SUB		EightFifty
+           1A4 : 19F4;  -- 	JNEG	led0-13
+           1A5 : 21F4;  -- 	JZERO   led0-13
+           1A6 : 12BD;  -- 	SUB		NineHundred
+           1A7 : 19F7;  -- 	JNEG	led0-14
+           1A8 : 21F7;  -- 	JZERO   led0-14
+           1A9 : 12BE;  -- 	SUB		NineFifty
+           1AA : 19FA;  -- 	JNEG	led0-15
+           1AB : 21FA;  -- 	JZERO   led0-15
+           1AC : 12BF;  -- 	SUB	    OneThousand
+           1AD : 19FD;  -- 	JNEG	led0-16
+           1AE : 21FD;  -- 	JZERO   led0-16
+           1AF : 15B0;  -- 	jump	read
+           1B0 : 4800;  -- 	IN 		SWITCHES
+           1B1 : 4C11;  -- 		OUT		LEDG
+           1B2 : 21C7;  -- 	JZERO	read2
+           1B3 : 37FF;  -- 	ADDI	-1
+           1B4 : 21C7;  -- 	JZERO	read2
+           1B5 : 37FF;  -- 	ADDI	-1
+           1B6 : 21C7;  -- 	JZERO	read2
+           1B7 : 37FE;  -- 	ADDI	-2
+           1B8 : 21C7;  -- 	JZERO	read2
+           1B9 : 37FC;  -- 	ADDI	-4
+           1BA : 21C7;  -- 	JZERO	read2
+           1BB : 37F8;  -- 	ADDI	-8
+           1BC : 21C7;  -- 	JZERO	read2
+           1BD : 37F0;  -- 	ADDI	-16
+           1BE : 21C7;  -- 	JZERO	read2
+           1BF : 37E0;  -- 	ADDI	-32
+           1C0 : 21C7;  -- 	JZERO	read2
+           1C1 : 37C0;  -- 	ADDI	-64
+           1C2 : 21C7;  -- 	JZERO	read2
+           1C3 : 0698;  -- 	LOAD	ZERO
+           1C4 : 4C01;  -- 	OUT		LEDS
+           1C5 : 4C16;  -- 	OUT		BEEP
+           1C6 : 15B0;  -- 	JUMP	read
+           1C7 : 2203;  -- 	JZERO   stop
+           1C8 : 06D8;  -- 	LOAD    SON
+           1C9 : 1000;  -- 	SUB     SWITCHES
+           1CA : 1E03;  -- 	JPOS    stop
+           1CB : 1A03;  -- 	JNEG    stop
+           1CC : 14F0;  -- 	jump	SonarTest      
+           1CD : 0698;  -- 	LOAD	Zero
+           1CE : 4C01;  -- 	OUT		LEDS
+           1CF : 15B0;  -- 	jump 	read
+           1D0 : 0699;  -- 	LOAD	One
+           1D1 : 4C01;  -- 	OUT		LEDS
+           1D2 : 15B0;  -- 	jump 	read
+           1D3 : 069B;  -- 	LOAD	Three
+           1D4 : 4C01;  -- 	OUT		LEDS
+           1D5 : 15B0;  -- 	jump 	read
+           1D6 : 069F;  -- 	LOAD	Seven
+           1D7 : 4C01;  -- 	OUT		LEDS
+           1D8 : 15B0;  -- 	jump 	read
+           1D9 : 06A6;  -- 	LOAD	Fifteen
+           1DA : 4C01;  -- 	OUT		LEDS
+           1DB : 15B0;  -- 	jump 	read
+           1DC : 06A8;  -- 	LOAD	ThirtyOne
+           1DD : 4C01;  -- 	OUT		LEDS
+           1DE : 15B0;  -- 	jump 	read
+           1DF : 06AB;  -- 	LOAD	SixtyThree
+           1E0 : 4C01;  -- 	OUT		LEDS
+           1E1 : 15B0;  -- 	jump 	read
+           1E2 : 06C0;  -- 	LOAD	OneTwentySeven
+           1E3 : 4C01;  -- 	OUT		LEDS
+           1E4 : 15B0;  -- 	jump 	read
+           1E5 : 06C2;  -- 	LOAD	TwoFiftyFive
+           1E6 : 4C01;  -- 	OUT		LEDS
+           1E7 : 15B0;  -- 	jump 	read
+           1E8 : 06C3;  -- 	LOAD	FiveEleven
+           1E9 : 4C01;  -- 	OUT		LEDS
+           1EA : 15B0;  -- 	jump 	read
+           1EB : 06C4;  -- 	LOAD	OneThousandTwentyThree
+           1EC : 4C01;  -- 	OUT		LEDS
+           1ED : 15B0;  -- 	jump 	read
+           1EE : 06C5;  -- 	LOAD	TwoThousandFortySeven
+           1EF : 4C01;  -- 	OUT		LEDS
+           1F0 : 15B0;  -- 	jump 	read
+           1F1 : 06C6;  -- 	LOAD	FourThousandNinetyFive
+           1F2 : 4C01;  -- 	OUT		LEDS
+           1F3 : 15B0;  -- 	jump 	read
+           1F4 : 06C7;  -- 	LOAD	EightThousandOneHundredNinetyOne
+           1F5 : 4C01;  -- 	OUT		LEDS
+           1F6 : 15B0;  -- 	jump 	read
+           1F7 : 06C8;  -- 	LOAD	SixteenThousandThreeHundredEightyThree 
+           1F8 : 4C01;  -- 	OUT		LEDS
+           1F9 : 15B0;  -- 	jump 	read
+           1FA : 06C9;  -- 	LOAD	ThirtyTwothousandSevenHundredSixtySeven 
+           1FB : 4C01;  -- 	OUT		LEDS
+           1FC : 15B0;  -- 	jump 	read
+           1FD : 06CA;  -- 	LOAD	SixtyFiveThousandFiveHundredThirtyFive 
+           1FE : 4C01;  -- 	OUT		LEDS
+           1FF : 15B0;  -- 	jump 	read
+           200 : 06CB;  -- 	LOAD	OneHundredThirtyOneThouandSeventyOne
+           201 : 4C01;  -- 	OUT		LEDS
+           202 : 15B0;  -- 	jump 	read	
+           203 : 0698;  -- 	LOAD   Zero
+           204 : 4CB2;  -- 	OUT	   SONAREN
+           205 : 4C01;  -- 	OUT    LEDS
+           206 : 40F0;  -- 	CALL   SonarTest
+           207 : 4C16;  -- 	OUT	   BEEP
+           208 : 0698;  -- 	LOAD   Zero
+           209 : 4CB2;  -- 	OUT	   SONAREN
+           20A : 4C01;  -- 	OUT    LEDS 	
+           20B : 40F0;  -- 	CALL   SonarTest
+           20C : 0690;  -- 	LOAD	hhun
+           20D : 3401;  -- 	ADDI	1
+           20E : 0A90;  -- 	STORE	hhun
+           20F : 0694;  -- 	LOAD	sevin
+           210 : 379C;  -- 	ADDI	-100
+           211 : 0A94;  -- 	STORE	sevin
+           212 : 1E0C;  -- 	JPOS	hundredplace
+           213 : 220C;  -- 	JZERO	hundredplace
+           214 : 3464;  -- 	ADDI	100
+           215 : 0A94;  -- 	STORE	sevin
+           216 : 0691;  -- 	LOAD	tten
+           217 : 3401;  -- 	ADDI	1
+           218 : 0A91;  -- 	STORE	tten
+           219 : 0694;  -- 	LOAD	sevin
+           21A : 37F6;  -- 	ADDI	-10
+           21B : 0A94;  -- 	STORE	sevin
+           21C : 1E16;  -- 	JPOS	tenplace
+           21D : 2216;  -- 	JZERO	tenplace	
+           21E : 340A;  -- 	ADDI	10
+           21F : 0A94;  -- 	STORE	sevin
+           220 : 0692;  -- 	LOAD	oone
+           221 : 3401;  -- 	ADDI	1
+           222 : 0A92;  -- 	STORE	oone
+           223 : 0694;  -- 	LOAD	sevin
+           224 : 37FF;  -- 	ADDI	-1
+           225 : 0A94;  -- 	STORE	sevin
+           226 : 1E20;  -- 	JPOS	oneplace
+           227 : 2220;  -- 	JZERO	oneplace
+           228 : 3401;  -- 	ADDI	1
+           229 : 0A94;  -- 	STORE   sevin
+           22A : 0696;  -- 	LOAD	sevout0
+           22B : 2A90;  -- 	OR		hhun
+           22C : 3004;  -- 	SHIFT	4
+           22D : 2A91;  -- 	OR		tten
+           22E : 3004;  -- 	SHIFT	4
+           22F : 2A92;  -- 	OR		oone
+           230 : 0A95;  -- 	STORE	sevout
+           231 : 0693;  -- 	LOAD	negone ; This resets all the values needed for the sevenseg conversion
+           232 : 0A92;  -- 	STORE	oone
+           233 : 0A91;  -- 	STORE	tten
+           234 : 0A90;  -- 	STORE	hhun
+           235 : 068E;  -- 	LOAD	sev
+           236 : 0A96;  -- 	STORE	sevout0
+           237 : 0A94;  -- 	STORE	sevin
+           238 : 4400;  -- 	RETURN	
+           239 : 4803;  -- 	IN		XIO			; Now, wait for KEY1 to be pressed
+           23A : 26DB;  -- 	AND		Keymask		; Keymask for key1
+           23B : 2239;  -- 	JZERO	Key1sub		; If key1 pressed, repeat
+           23C : 423E;  -- 	CALL	Wait2	
+           23D : 4400;  -- 	RETURN
+           23E : 4C02;  -- 	OUT     TIMER		; One second pause subroutine
+           23F : 4802;  -- 	IN      TIMER
+           240 : 37F6;  -- 	ADDI    -10			; 111111 1000001010
+           241 : 1A3F;  -- 	JNEG    Wloop2
+           242 : 4400;  -- 	RETURN	
+           243 : 4C02;  -- 	OUT     TIMER		; One second pause subroutine
+           244 : 4802;  -- 	IN      TIMER
+           245 : 0EDE;  -- 	ADD    Tspeed		; 111111 1000001010
+           246 : 1A44;  -- 	JNEG    Wloop
+           247 : 4400;  -- 	RETURN
+           248 : 0693;  -- 	LOAD	negone ; This resets all the values needed for the sevenseg conversion
+           249 : 0A92;  -- 	STORE	oone
+           24A : 0A91;  -- 	STORE	tten
+           24B : 0A90;  -- 	STORE	hhun
+           24C : 068E;  -- 	LOAD	sev
+           24D : 0A95;  -- 	STORE	sevout
+           24E : 0A94;  -- 	STORE	sevin
+           24F : 0698;  -- 	LOAD    Zero
+           250 : 4C90;  -- 	OUT		I2C_CMD		; Sets up the I2C bus for use
+           251 : 068C;  -- 	LOAD	Writeone	; Write one bit, read zero bits to the ADC
+           252 : 4C90;  -- 	OUT		I2C_CMD		; Writing this value to I2C_CMD
+           253 : 0698;  -- 	LOAD	Zero		; This zero is necessary to set up the ADC
+           254 : 4C91;  -- 	OUT		I2C_DATA
+           255 : 427B;  -- 	CALL	ReadI2CBUSY	; Wait for BUSY to return zero after every instruction.
+           256 : 427F;  -- 	CALL	ReadI2CData	; This data value is useless.
+           257 : 4400;  -- 	RETURN
+           258 : 427F;  -- 	CALL	ReadI2CData	; Ordering the I2C to prepare a useful data point.
+           259 : 4891;  -- 	IN		I2C_DATA	; This is a useful data point.
+           25A : 0A89;  -- 	STORE	DivNum		; Preparing for division, by declaring it the numerator.
+           25B : 06A2;  -- 	LOAD	Ten
+           25C : 0A8A;  -- 	STORE	DivDen		; Sets ten as the denominator.
+           25D : 0698;  -- 	LOAD	Zero
+           25E : 0A8B;  -- 	STORE	DivResult	; Resets the quotient to zero.
+           25F : 0693;  -- 	LOAD	negone		; Resets the values needed for the sevenseg display.
+           260 : 0A92;  -- 	STORE	oone
+           261 : 0A91;  -- 	STORE	tten
+           262 : 0A90;  -- 	STORE	hhun
+           263 : 068E;  -- 	LOAD	sev			
+           264 : 0A95;  -- 	STORE	sevout
+           265 : 0A94;  -- 	STORE	sevin
+           266 : 0698;  -- 	LOAD    Zero
+           267 : 4272;  -- 	CALL	Divide		; Calling the divide subroutine to convert the raw data to readable voltage.
+           268 : 068B;  -- 	LOAD	DivResult
+           269 : 0A94;  -- 	STORE	sevin	; Sending it to the seven-segment display subroutine.
+           26A : 420C;  -- 	CALL	sevcon
+           26B : 4C02;  -- 	OUT		TIMER	; This code tells the display to wait one tenth of a second, so the seven-seg will be legible.
+           26C : 4802;  -- 	IN		TIMER
+           26D : 37FF;  -- 	ADDI	-1
+           26E : 1A6C;  -- 	JNEG	WloopTenth
+           26F : 0695;  -- 	LOAD	sevout	; Outputting the final result to the seven-seg.
+           270 : 4C14;  -- 	OUT		SEVENSEG2
+           271 : 4400;  -- 	RETURN		
+           272 : 0689;  -- 	LOAD	DivNum
+           273 : 128A;  -- 	SUB		DivDen
+           274 : 0A89;  -- 	STORE	DivNum
+           275 : 1A7A;  -- 	JNEG	StopDivide
+           276 : 068B;  -- 	LOAD	DivResult
+           277 : 0E99;  -- 	ADD		One
+           278 : 0A8B;  -- 	STORE	DivResult
+           279 : 1672;  -- 	JUMP	Divide
+           27A : 4400;  -- 	RETURN
+           27B : 4892;  -- 	IN		I2C_BUSY
+           27C : 227E;  -- 	JZERO	BUSYReturn
+           27D : 167B;  -- 	JUMP	ReadI2CBUSY
+           27E : 4400;  -- 	RETURN
+           27F : 068D;  -- 	LOAD	Readone		; Write zero bits, read one bit from the ADC
+           280 : 4C90;  -- 	OUT		I2C_CMD
+           281 : 0698;  -- 	LOAD	Zero
+           282 : 4C91;  -- 	OUT		I2C_DATA
+           283 : 427B;  -- 	CALL	ReadI2CBUSY
+           284 : 4891;  -- 	IN		I2C_DATA
+           285 : 4400;  -- 	RETURN
+           286 : 0000;  -- Temp:     DW 0
+           287 : 0000;  -- TempV:	  DW 0
+           288 : 0001;  -- wipetemp: DW &B0000000000000001
+           289 : 0000;  -- DivNum:		DW 0
+           28A : 0000;  -- DivDen:		DW 0
+           28B : 0000;  -- DivResult:	DW 0
+           28C : 1090;  -- Writeone:	DW	&H1090
+           28D : 0190;  -- Readone:	DW	&H0190
+           28E : 0000;  -- sev:	  DW &B0000000000000000
+           28F : FFFF;  -- tthou:    DW -1
+           290 : FFFF;  -- hhun:     DW -1
+           291 : FFFF;  -- tten:     DW -1
+           292 : FFFF;  -- oone:     DW -1
+           293 : FFFF;  -- negone:     DW -1
+           294 : 0000;  -- sevin:	  DW &B0000000000000000
+           295 : 0000;  -- sevout:   DW &B0000000000000000
+           296 : 0000;  -- sevout0:   DW &B0000000000000000
+           297 : FFFF;  -- FFFF:	  DW &HFFFF
+           298 : 0000;  -- Zero:     DW 0
+           299 : 0001;  -- One:      DW 1
+           29A : 0002;  -- Two:      DW 2
+           29B : 0003;  -- Three:    DW 3
+           29C : 0004;  -- Four:     DW 4
+           29D : 0005;  -- Five:     DW 5
+           29E : 0006;  -- Six:      DW 6
+           29F : 0007;  -- Seven:    DW 7
+           2A0 : 0008;  -- Eight:    DW 8
+           2A1 : 0009;  -- Nine:     DW 9
+           2A2 : 000A;  -- Ten:      DW 10
+           2A3 : 000B;  -- Eleven:	  DW 11
+           2A4 : 000C;  -- Twelve:   DW 12
+           2A5 : 000D;  -- Thirteen: DW 13
+           2A6 : 000F;  -- Fifteen:  DW 15
+           2A7 : 0010;  -- Sixteen:  DW 16
+           2A8 : 001F;  -- ThirtyOne: DW 31
+           2A9 : 0020;  -- ThirtyTwo: DW 32
+           2AA : 0032;  -- Fifty: DW 50
+           2AB : 003F;  -- SixtyThree: DW 63
+           2AC : 0040;  -- SixtyFour: DW 64
+           2AD : 0064;  -- OneHundred: DW 100
+           2AE : 0096;  -- OneFifty: DW 150
+           2AF : 00C8;  -- TwoHundred: DW 200
+           2B0 : 00FA;  -- TwoFifty: DW 250
+           2B1 : 012C;  -- ThreeHundred: DW 300
+           2B2 : 015E;  -- ThreeFifty: DW 350
+           2B3 : 0190;  -- FourHundred: DW 400
+           2B4 : 01C2;  -- FourFifty: DW 450
+           2B5 : 01F4;  -- FiveHundred: DW 500
+           2B6 : 0226;  -- FiveFifty: DW 550
+           2B7 : 0258;  -- SixHundred: DW 600
+           2B8 : 028A;  -- SixFifty: DW 650
+           2B9 : 02BC;  -- SevenHundred: DW 700
+           2BA : 02EE;  -- SevenFifty: DW 750
+           2BB : 0320;  -- EightHundred: DW 800
+           2BC : 0352;  -- EightFifty: DW 850
+           2BD : 0384;  -- NineHundred: DW 900
+           2BE : 03B6;  -- NineFifty: DW 950
+           2BF : 03E8;  -- OneThousand: DW 1000
+           2C0 : 007F;  -- OneTwentySeven: DW 127
+           2C1 : 0080;  -- OneTwentyEight: DW 128
+           2C2 : 00FF;  -- TwoFiftyFive: DW 255
+           2C3 : 01FF;  -- FiveEleven: DW 511
+           2C4 : 03FF;  -- OneThousandTwentyThree: DW 1023
+           2C5 : 07FF;  -- TwoThousandFortySeven: DW 2047
+           2C6 : 0FFF;  -- FourThousandNinetyFive: DW 4095
+           2C7 : 1FFF;  -- EightThousandOneHundredNinetyOne: DW 8191
+           2C8 : 3FFF;  -- SixteenThousandThreeHundredEightyThree: DW 16383
+           2C9 : 7FFF;  -- ThirtyTwothousandSevenHundredSixtySeven: DW 32767
+           2CA : FFFF;  -- SixtyFiveThousandFiveHundredThirtyFive: DW 65535
+           2CB : FFFF;  -- OneHundredThirtyOneThouandSeventyOne: DW 131071
+           2CC : FFFF;  -- TwoHundredSixtyTwoThousandOneHundredFourtyThree: DW 262143
+           2CD : 7960;  -- beeptimer:  DW -100000
+           2CE : 0001;  -- LEDwipe:  DW &B0000000000000001
+           2CF : 0001;  -- EnSonar0: DW &B00000001
+           2D0 : 0002;  -- EnSonar1: DW &B00000010
+           2D1 : 0004;  -- EnSonar2: DW &B00000100
+           2D2 : 0008;  -- EnSonar3: DW &B00001000
+           2D3 : 0010;  -- EnSonar4: DW &B00010000
+           2D4 : 0020;  -- EnSonar5: DW &B00100000
+           2D5 : 0040;  -- EnSonar6: DW &B01000000
+           2D6 : 0080;  -- EnSonar7: DW &B10000000
+           2D7 : 00FF;  -- EnSonars: DW &B11111111
+           2D8 : 007F;  -- SON: DW &B01111111
+           2D9 : 003F;  -- LEDDIST: DW &B00111111
+           2DA : 0018;  -- tf:		  DW &B00011000
+           2DB : 0001;  -- Keymask: DW &B0000001
+           2DC : 0002;  -- Keymask2: DW &B0000010
+           2DD : 0007;  -- Keytest: DW &B0000111
+           2DE : FFF6;  -- Tspeed:	 DW -10
+           2DF : 0017;  -- tt:       DW 23
+           2E0 : 0064;  -- Forward:  DW 100
+           2E1 : FF9C;  -- Reverse:  DW -100
+           2E2 : 00FF;  -- Switchmask: DW &B11111111
+           2E3 : 0001;  -- Selectmask: DW &B00000001
+           2E4 : 0000;  -- Select:     DW &B00000000
+           2E5 : 0000;  -- motorspeed: DW &B00000000
+           2E6 : 0002;  -- Dirmask:    DW &B00000010
+           2E7 : 0000;  -- Dir:        DW &B00000000
+           2E8 : 003C;  -- Motormask:  DW &B00111100
+           2E9 : 0000;  -- Motor:      DW &B00000000
+  END;

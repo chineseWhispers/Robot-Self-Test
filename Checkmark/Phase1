@@ -1,0 +1,310 @@
+; SimpleRobotProgram.asm
+; Created by Kevin Johnson
+; This program performs extremely simple tests on a handful of 
+; IO peripherals and robot hardware.
+
+	ORG     &H000		;Begin program at x000
+Init:
+	LOAD    Zero
+	OUT     SONAREN     ; Disable sonar
+	OUT     LVELCMD     ; Stop motors
+	OUT     RVELCMD
+	
+OutVer:					; Initial test to confirm basic input switch working
+	;LOAD	FFFF		; Load full "FFFF" in hex
+	;OUT		LEDS		; Turn on all red LEDs
+	;OUT		LEDSG		; Turn on all green LEDs
+	;OUT		LCD			; Print to LCD
+	;OUT		SEVENSEG	; Print on first four of SEVENSEG
+	;OUT		SEVENSEG2	; Print on second four of SEVENSEG
+	
+	LOAD	ten
+	CALL	sevcon
+	OUT		SEVENSEG2
+	
+	IN		XIO			; Now, wait for KEY1 to be pressed
+	AND		Keymask		; Keymask for key1
+	JPOS	OutVer
+	JNEG	OutVer
+	CALL	Key1sub		; If key1 pressed, go to next things
+
+
+InVer:						; Input Verification
+							; Output 0001 to LCD.
+	LOAD		One
+	OUT			LCD
+	
+	IN			SWITCHES	;Check the switches
+	OUT 		LEDS		;Output so red LEDs correspond to switches
+	ADD			One			;Add one- when all the switches are already on, this will flip from all 1's to all 0's
+	
+	JZERO		InVer2		;Proceed if all switches up, repeat if not
+	JUMP		InVer
+	
+InVer2:						;Test of keys
+	
+	LOAD		Keytest		;Loads a vector of all 0's except three keys to test
+	STORE		Temp		;Store in temp
+	
+	
+InVer22:	
+	
+	LOAD		Two			;Put 10 on the LCD
+	OUT			LCD
+
+	
+			
+	IN			XIO			;Take current input, AND with temp.
+	AND			Temp		;AND'ing results in keys pressed changing their place in temp. to 0
+	STORE		Temp
+	
+	JZERO		TimerVer00	;when they're all 0, proceed, otherwise repeat
+	Jump		InVer22
+	
+TimerVer00:
+
+	LOAD		Zero
+	OUT			LEDS
+
+	LOAD		Three			;Put 10 on the LCD
+	OUT			LCD
+	
+	
+	IN		XIO			; Now, wait for KEY1 to be pressed
+	AND		Keymask		; Keymask for key1
+	JPOS	TimerVer00
+	JNEG	TimerVer00
+	CALL	Key1sub		; If key1 pressed, go to next things
+	
+	LOAD	LEDwipe
+	STORE	wipetemp
+	
+TimerVer:					;Start testing timer
+	
+	LOAD		Four		;put 11 on LCD
+	OUT			LCD
+
+	LOAD		wipetemp		;Load vector with only LSB 1
+	OUT			LEDS		;Put out to LEDS
+	
+	CALL		Wait1		;Use wait routine, starts at waiting 1 second
+		
+	LOAD		wipetemp		;Shift active LED to the left
+	SHIFT		1
+	STORE		wipetemp
+		
+	IN		XIO			; Now, wait for KEY1 to be pressed
+	AND		Keymask		; Keymask for key1
+	JPOS	TimerVer
+	JNEG	TimerVer
+	CALL	Key1sub		; If key1 pressed, go to next things
+	
+TimerVer2:	
+		
+	LOAD		Tspeed
+	ADDI		5			;000000 0000001001
+	JZERO		BeepVer		;When the timing parameter has been reduced twice down to 0, go to beep test
+	STORE		Tspeed
+
+	
+	LOAD		One
+	STORE		wipetemp
+	
+	JUMP		TimerVer
+	
+BeepVer:
+
+	Load		Five		;print 12 to LCD
+	Out			LCD
+	
+	IN			XIO			;when KEY1 is pressed, beep
+	AND			Keymask2
+	JPOS		BeepVer
+	OUT			BEEP
+	Jump		BeepVer
+		
+	;ADD			tf
+	;STORE		Motor
+	;AND			Motormask
+	;JZERO		off
+	;Jump		Next	
+off:
+	;LOAD		Motor
+	;OUT			LVELCMD
+	
+	;Jump		Next
+
+	; have temp, just an empty vector
+sevcon:
+
+
+thousandplace:
+
+	LOAD	tthou
+	ADDI	1
+	STORE	tthou
+	LOAD	value
+	ADDI	-1000
+	STORE	value
+	JPOS	thousandplace
+	JZERO	thousandplace
+	ADDI	1000
+	STORE	value
+hundredplace:
+
+	LOAD	hhun
+	ADDI	1
+	STORE	hhun
+	LOAD	value
+	ADDI	-100
+	STORE	value
+	JPOS	hundredplace
+	JZERO	hundredplace
+	ADDI	100
+	STORE	value
+tenplace:
+
+	LOAD	tten
+	ADDI	1
+	STORE	tten
+	LOAD	value
+	ADDI	-10
+	STORE	value
+	JPOS	tenplace
+	JZERO	tenplace	
+	ADDI	10
+	STORE	value
+oneplace:
+
+	LOAD	oone
+	ADDI	1
+	STORE	oone
+	LOAD	value
+	ADDI	-1
+	STORE	value
+	JPOS	oneplace
+	JZERO	oneplace
+	ADDI	1
+	STORE   value
+
+	LOAD	subout
+	AND		tthou
+	SHIFT	4
+	AND		hhun
+	SHIFT	4
+	AND		tten
+	SHIFT	4
+	AND		oone
+	STORE	subout
+	
+	RETURN
+
+	
+	
+	
+		
+Key1sub:
+	IN		XIO			; Now, wait for KEY1 to be pressed
+	AND		Keymask		; Keymask for key1
+	JZERO	Key1sub		; If key1 pressed, repeat
+	CALL	Wait2	
+	RETURN
+	
+Wait2:
+	OUT     TIMER		; One second pause subroutine
+Wloop2:
+	IN      TIMER
+	ADDI    -10			; 111111 1000001010
+	JNEG    Wloop2
+	RETURN	
+	
+Wait1:
+	OUT     TIMER		; One second pause subroutine
+Wloop:
+	IN      TIMER
+	ADD    Tspeed		; 111111 1000001010
+	JNEG    Wloop
+	RETURN
+
+; This is a good place to put variables
+Temp:     DW 0
+wipetemp: DW &B0000000000000001
+
+; Having some constants can be very useful
+value:	  DW &B0000000000000000
+subout:   DW &B0000000000000000
+tthou:    DW -1
+hhun:     DW -1
+tten:     DW -1
+oone:     DW -1
+FFFF:	  DW &HFFFF
+Zero:     DW 0
+One:      DW 1
+Two:      DW 2
+Three:    DW 3
+Four:     DW 4
+Five:     DW 5
+Six:      DW 6
+Seven:    DW 7
+Eight:    DW 8
+Nine:     DW 9
+Ten:      DW 10
+Eleven:	  DW 11
+Twelve:   DW 12
+Fifteen:  DW 15
+Forward:  DW 100
+Reverse:  DW -100
+
+LEDwipe:  DW &B0000000000000001
+
+EnSonar1: DW &B00000010
+EnSonar2: DW &B00000100
+EnSonar3: DW &B00001000
+EnSonar4: DW &B00010000
+EnSonar5: DW &B00100000
+EnSonar6: DW &B10000000
+EnSonar7: DW &B10000000
+EnSonars: DW &B1111111111111111
+
+tf:		  DW &B00011000
+Switchmask: DW &B01111111
+Motormask:  DW &B10000000
+Motor:   DW &B00000000
+Keymask: DW &B0000001
+Keymask2: DW &B0000010
+Keytest: DW &B0000111
+Tspeed:	 DW -10
+	
+
+; IO address space map
+SWITCHES: EQU &H00  ; slide switches
+LEDS:     EQU &H01  ; red LEDs
+LEDSG:    EQU &H11	
+TIMER:    EQU &H02  ; timer, usually running at 10 Hz
+XIO:      EQU &H03  ; pushbuttons and some misc. I/0
+SEVENSEG: EQU &H04  ; seven-segment display (4-digits only)
+SEVENSEG2: EQU &H14 ; second seven-segment display (4-digits only)
+LCD:      EQU &H06  ; primitive 4-digit LCD display
+LPOS:     EQU &H80  ; left wheel encoder position (read only)
+LVEL:     EQU &H82  ; current left wheel velocity (read only)
+LVELCMD:  EQU &H83  ; left wheel velocity command (write only)
+RPOS:     EQU &H88  ; same values for right wheel...
+RVEL:     EQU &H8A  ; ...
+RVELCMD:  EQU &H8B  ; ...
+I2C_CMD:  EQU &H90  ; I2C module's CMD register,
+I2C_DATA: EQU &H91  ; ... DATA register,
+I2C_BUSY: EQU &H92  ; ... and BUSY register
+SONAR:    EQU &HA0  ; base address for more than 16 registers....
+DIST0:    EQU &HA8  ; the eight sonar distance readings
+DIST1:    EQU &HA9  ; ...
+DIST2:    EQU &HAA  ; ...
+DIST3:    EQU &HAB  ; ...
+DIST4:    EQU &HAC  ; ...
+DIST5:    EQU &HAD  ; ...
+DIST6:    EQU &HAE  ; ...
+DIST7:    EQU &HAF  ; ...
+SONAREN:  EQU &HB2  ; register to control which sonars are enabled
+XPOS:     EQU &HC0  ; Current X-position (read only)
+YPOS:     EQU &HC1  ; Y-position
+THETA:    EQU &HC2  ; Current rotational position of robot (0-701)
+BEEP:	  EQU &H16  ; Beep module

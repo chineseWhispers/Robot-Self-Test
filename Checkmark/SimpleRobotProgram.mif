@@ -1,0 +1,57 @@
+-- Altera Memory Initialization File (MIF)
+
+DEPTH = 1024;
+WIDTH = 16;
+
+ADDRESS_RADIX = HEX;
+DATA_RADIX = HEX;
+
+CONTENT
+  BEGIN
+    [000..3FF] : 0000;  -- Default to NOP
+
+           000 : 0416;  -- 	LOAD    Zero
+           001 : 4CB2;  -- 	OUT     SONAREN     ; Disable sonar
+           002 : 4C83;  -- 	OUT     LVELCMD     ; Stop motors
+           003 : 4C8B;  -- 	OUT     RVELCMD
+           004 : 4800;  -- 	IN      SWITCHES
+           005 : 4C01;  -- 	OUT     LEDS        ; Output switches to LEDs
+           006 : 242B;  -- 	AND     EnSonars    ; Discard all but 8 bits
+           007 : 4CB2;  -- 	OUT     SONAREN     ; Turn on whichever sonars correspond to UP switches
+           008 : 48A8;  -- 	IN      DIST0       ; Read the distance from Sonar 0
+           009 : 4C06;  -- 	OUT     LCD         ; Output to LCD
+           00A : 4882;  -- 	IN      LVEL        ; Read velocity of left wheel
+           00B : 0815;  -- 	STORE   Temp
+           00C : 488A;  -- 	IN      RVEL
+           00D : 0C15;  -- 	ADD     Temp
+           00E : 4C04;  -- 	OUT     SEVENSEG    ; Output sum of wheel velocities to 7-seg
+           00F : 1404;  -- 	JUMP    Main        ; Repeat forever
+           010 : 4C02;  -- 	OUT     TIMER		; One second pause subroutine
+           011 : 4802;  -- 	IN      TIMER
+           012 : 37F6;  -- 	ADDI    -10
+           013 : 1811;  -- 	JNEG    Wloop
+           014 : 4400;  -- 	RETURN
+           015 : 0000;  -- Temp:     DW 0
+           016 : 0000;  -- Zero:     DW 0
+           017 : 0001;  -- One:      DW 1
+           018 : 0002;  -- Two:      DW 2
+           019 : 0003;  -- Three:    DW 3
+           01A : 0004;  -- Four:     DW 4
+           01B : 0005;  -- Five:     DW 5
+           01C : 0006;  -- Six:      DW 6
+           01D : 0007;  -- Seven:    DW 7
+           01E : 0008;  -- Eight:    DW 8
+           01F : 0009;  -- Nine:     DW 9
+           020 : 000A;  -- Ten:      DW 10
+           021 : 0064;  -- Forward:  DW 100
+           022 : FF9C;  -- Reverse:  DW -100
+           023 : 0001;  -- EnSonar0: DW &B00000001
+           024 : 0002;  -- EnSonar1: DW &B00000010
+           025 : 0004;  -- EnSonar2: DW &B00000100
+           026 : 0008;  -- EnSonar3: DW &B00001000
+           027 : 0010;  -- EnSonar4: DW &B00010000
+           028 : 0020;  -- EnSonar5: DW &B00100000
+           029 : 0040;  -- EnSonar6: DW &B01000000
+           02A : 0080;  -- EnSonar7: DW &B10000000
+           02B : 00FF;  -- EnSonars: DW &B11111111
+  END;

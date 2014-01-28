@@ -1,0 +1,15 @@
+1.	First, turn on the DE2 board/robot. All of the bottom row of LEDs, both red and green, should be turned on. Likewise, the 7-segment display should be printing "FFFF FFFF", while the LCD prints "FFFF". If any of these outputs are not working, it is likely a hardware issues. They will be essential to the subsequent tests.
+
+2.	Now that the outputs are shown to work, flip all of the bottom row of switches into the "down" position, then press KEY[0]. All of the LEDs should turn off, and the displays should be printing "0000 0000" and "0001", respectively.
+
+3.	One by one, flip the switches into the "up" position (disregard SW_17). For each switch flipped, the corresponding LED above it should turn on. Once all of the LEDs are turned on, press KEY[3], then KEY[2], then KEY[1], in any order. Do not press KEY[0], as it is assigned as a RESET to the this test.
+
+4.	The LCD should change to print "0010" after these steps, demonstrating all the inputs we will use are working. Return all of the switches to "down" position.
+
+5.	Now press KEY[1]. A single LED should turn on, shifting from right to left along all the red LEDs. It should move at a rate of approximately 1 LED shift per second. The LCD should read "0011".
+
+6.	Press KEY[1] again. The speed should double, demonstrating the correct operation of the DE2 board's Timer. 
+
+7.	Press KEY[1]. A beep should sound, lasting about 3 seconds. If this works, then the beep module is shown to work. LCD should read "0012".
+
+8.	Now press KEY[1]. The battery voltage should be printed on the 7-segment display. If it acceptable, press KEY[1] again. If the voltage is dangerously low, the machine will beep and refuse to proceed.
